@@ -232,11 +232,6 @@ Xtrain, Xtest, ytrain, ytest = model_selection.train_test_split(X, y, test_size=
 n_folds = 10
 
 
-def rmsle_cv(model):
-    kf = model_selection.KFold(n_folds, shuffle=True, random_state=42).get_n_splits(X)
-    rmse = np.sqrt(-model_selection.cross_val_score(model, X, y, scoring="neg_mean_squared_error", cv=kf))
-    return (sum(rmse) / n_folds)
-
 kRR = KernelRidge(alpha=2, degree=1)
 
 
@@ -249,11 +244,11 @@ kRR = KernelRidge(alpha=2, degree=1)
 # score
 
 clfList = [linear_model.LinearRegression(), ensemble.RandomForestRegressor(), ensemble.GradientBoostingRegressor(),
-           xgb.XGBRegressor(), KernelRidge(), linear_model.BayesianRidge(), lgb.LGBMRegressor()]
+           xgb.XGBRegressor(), KernelRidge(), linear_model.BayesianRidge(), lgb.LGBMRegressor(verbose = -1)]
 cvSplit = model_selection.ShuffleSplit(n_splits=10, train_size=0.5, test_size=0.5, random_state=0)
 maxDepthList = [2, 4]
 nEstimatorsList = [400, 500]
-num_leavesList = [4, 5, 20]
+num_leavesList = [4, 5]
 etaList = [0.1, 0.05, 0.01]
 rndStateList = [0, 1, 2]
 gammaList = [0]
@@ -308,7 +303,7 @@ class AveragingModels():
 
 # averaging
 bayR = linear_model.BayesianRidge()
-averagingC = AveragingModels(models=(clfList[4], bayR, clfList[6]), coeffs=[0.4, 0.4, 0.2])
+# averagingC = AveragingModels(models=(clfList[4], bayR, clfList[6]), coeffs=[0.4, 0.4, 0.2])
 averagingC = AveragingModels(models=(clfList[2], clfList[3], clfList[4], clfList[5], clfList[6]),
                              coeffs=[0.1, 0.1, 0.45, 0.2, 0.15])
 
@@ -318,24 +313,12 @@ print(metrics.mean_squared_error(ytest, arpredict) ** 0.5)
 predData = pd.DataFrame({'Index': ytest.index, 'SalePrice': ytest.values, 'SalePricePredicted': arpredict,
                          'Error': arpredict - ytest.values})
 
-averagingC = AveragingModels(models=(clfList[4], bayR, clfList[6]), coeffs=[0.4, 0.4, 0.2])
+# averagingC = AveragingModels(models=(clfList[4], bayR, clfList[6]), coeffs=[0.4, 0.4, 0.2])
 averagingC = AveragingModels(models=(clfList[2], clfList[3], clfList[4], clfList[5], clfList[6]),
                              coeffs=[0.1, 0.1, 0.35, 0.35, 0.1])
 bayR = linear_model.BayesianRidge()
 
-
-def eval_cv(clf, cvNum):
-    score = []
-    for i in range(cvNum):
-        Xtrain, Xtest, ytrain, ytest = model_selection.train_test_split(X, y, test_size=0.5, train_size=0.5,
-                                                                        random_state=i)
-        clf.fit(Xtrain, ytrain)  # Note we fit the Whole X, y
-        arpredict = clf.predict(Xtest)
-        score.append(metrics.mean_squared_error(ytest, arpredict) ** 0.5)
-    return sum(score) / len(score)
-
-
-eval_cv(averagingC, 5)
+house_prices_functions.eval_cv(averagingC, X, y, 5)
 
 averagingC.fit(X, y)  # Note we fit the Whole X, y
 arpredict = averagingC.predict(Xtest)
