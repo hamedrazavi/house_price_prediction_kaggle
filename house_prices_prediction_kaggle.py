@@ -129,7 +129,9 @@ trData.drop(trData[(trData['GrLivArea'] > 4000) & (trData['SalePrice'] < 300000)
 combinedData = pd.concat(objs=[trData, testData], axis=0).reset_index(drop=True)
 
 # After removing the two outliers:
-# Another possiblity for outliers is the price per area. There is only one house with a price per square foot less than $31, and the next lowest price is $40, so, we remove the cheapest one:
+# Another possiblity for outliers is the price per area. There is only one house with a price per square foot
+# less than $31, and the next lowest price is $40; but comparing the averaged corss val error we concluded that we
+# should not remove this outlier
 trData[trData['SalePrice'] / trData['GrLivArea'] < 31]
 # trData.drop(trData[trData['SalePrice'] / trData['GrLivArea'] < 31].index, inplace=True)
 
@@ -227,15 +229,12 @@ y = trData['SalePrice']
 Xtrain, Xtest, ytrain, ytest = model_selection.train_test_split(X, y, test_size=0.5, train_size=0.5, random_state=1)
 n_folds = 10
 
-
-kRR = KernelRidge(alpha=2, degree=1)
-
 score = [0, 0]
-kfold = 5
-for i in range(kfold):
+k_fold = 5
+for i in range(k_fold):
     Xtrain, Xtest, ytrain, ytest = model_selection.train_test_split(X, y, train_size=0.5, test_size=0.5, random_state=i)
     score = [sum(x) for x in zip(score, house_prices_functions.find_cv_error(Xtrain, ytrain))]
-score = [x / kfold for x in score]
+score = [x / k_fold for x in score]
 print(score[0], " ", score[1])
 
 #final Crossvalidation
@@ -298,20 +297,8 @@ class AveragingModels():
         return pred
 
 # averaging
-bayR = linear_model.BayesianRidge()
-averagingC = AveragingModels(models=(clfList[2], clfList[3], clfList[4], clfList[5], clfList[6]),
-                             coeffs=[0.1, 0.1, 0.45, 0.2, 0.15])
-
-averagingC.fit(Xtrain, ytrain)  # Note we fit the Whole X, y
-arpredict = averagingC.predict(Xtest)
-print(metrics.mean_squared_error(ytest, arpredict) ** 0.5)
-predData = pd.DataFrame({'Index': ytest.index, 'SalePrice': ytest.values, 'SalePricePredicted': arpredict,
-                         'Error': arpredict - ytest.values})
-
 averagingC = AveragingModels(models=(clfList[2], clfList[3], clfList[4], clfList[5], clfList[6]),
                              coeffs=[0.1, 0.1, 0.35, 0.35, 0.1])
-bayR = linear_model.BayesianRidge()
-
 house_prices_functions.eval_cv(averagingC, X, y, 5)
 
 averagingC.fit(X, y)  # Note we fit the Whole X, y
@@ -333,7 +320,7 @@ arpredict = np.expm1(arpredict)
 ypredict = pd.DataFrame({'Id': testData['Id'], 'SalePrice': arpredict})
 ypredict.to_csv('../predictions.csv', index=False)
 ypredict.head()
-yold = pd.read_csv('../predictions11644.csv')
+yold = pd.read_csv('../predictions11600.csv')
 yold.head()
 plt.plot(yold)
 plt.plot(ypredict)
