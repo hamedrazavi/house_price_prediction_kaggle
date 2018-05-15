@@ -84,11 +84,9 @@ combinedData = house_prices_functions.combineTrTest(trData, testData)
 combinedData['LandContour'].replace(['Bnk', 'Lvl', 'Low', 'HLS'], [0, 1, 2, 3], inplace=True)
 # As there seem to be no correlation (even a stragne correlation that in Severe slope the price per area is higher!) we drop this feature.
 combinedData.drop('LandSlope', 1, inplace=True)
-combinedData['Utilities'].replace(['NoSeWa'], ['None'], inplace=True)
-combinedData['Utilities'].replace(['AllPub', 'None'], [1, 0], inplace=True)
+combinedData.drop('Utilities', 1, inplace = True)
 # There deoes not seem to be a meaningful correlation, so we drop this feature:
-# combinedData.drop('MiscFeature', 1, inplace = True)
-combinedData['MiscFeature'].replace(['Othr', 'Shed', 'Gar2', 'None', 'TenC'], [0, 1, 2, 3, 4], inplace=True)
+combinedData.drop('MiscFeature', 1, inplace=True)
 # When we graph price per area vs overal quality, to our surprise, the Overal qual = 9 has a higher price per area than 10! So, we combine, 9 and 10. Also, 1, 2, and 3, will be replace by 1.
 # combinedData['OverallQual'].replace([1, 2, 3, 9, 10], [1, 1, 1, 9, 9], inplace = True)
 combinedData['ExterQual'].replace(['Fa', 'TA', 'Gd', 'Ex'], [0, 1, 2, 3], inplace=True)
@@ -100,9 +98,9 @@ combinedData['Functional'].replace(['Sev', 'Maj2', 'Maj1', 'Mod', 'Min2', 'Min1'
                                    [0, 0, 1, 1, 1, 1, 2], inplace=True)
 combinedData['CentralAir'].replace(['N', 'Y'], [0, 1], inplace=True)
 combinedData['PavedDrive'].replace(['N', 'P', 'Y'], [0, 1, 2], inplace=True)
-combinedData['PoolQC'].replace(['None', 'Fa', 'Gd', 'Ex'], [0, 1, 2, 3], inplace=True)
 # There does not seem to be a meaningful correlation, also, because given that no fence has a better average price than fence with Good privacy, and not much correlation with price per area we drop this feature:
 combinedData.drop('Fence', 1, inplace=True)
+combinedData.drop('PoolQC', 1, inplace = True)
 combinedData['HeatingQC'].replace(['Po', 'Fa', 'TA', 'Gd', 'Ex'], [0, 1, 2, 3, 4], inplace=True)
 combinedData['FireplaceQu'].replace(['Po', 'None', 'Fa', 'TA', 'Gd', 'Ex'], [0, 1, 2, 3, 4, 5], inplace=True)
 combinedData['KitchenQual'].replace(['Fa', 'TA', 'Gd', 'Ex'], [0, 1, 2, 3], inplace=True)
@@ -141,27 +139,25 @@ for data in data_list:
 
 # House age seems to be an important feature correlated with the saleprice:
 data_list = [trData, testData]
-for data in data_list:
-    data['HouseAge'] = data['YrSold'] - data['YearBuilt']
-    data['YrfromRemod'] = data['YrSold'] - data['YearRemodAdd']
-trData.drop('YearBuilt', 1, inplace=True)
-testData.drop('YearBuilt', 1, inplace=True)
+# for data in data_list:
+#     data['HouseAge'] = data['YrSold'] - data['YearBuilt']
+#     data['YrfromRemod'] = data['YrSold'] - data['YearRemodAdd']
+# trData.drop('YearBuilt', 1, inplace=True)
+# testData.drop('YearBuilt', 1, inplace=True)
 
 
 combinedData = pd.concat(objs=[trData, testData], axis=0).reset_index(drop=True)
 combinedData[combinedData['GarageYrBlt'] > 2010]['GarageYrBlt']
-testData.loc[testData['GarageYrBlt'] > 2010, 'GarageYrBlt'] = 2010
+combinedData.loc[combinedData['GarageYrBlt'] > 2010, 'GarageYrBlt'] = 2010
 combinedData['GarageCars'].replace([5], 4, inplace=True)
+#since GarageArea very correlated with GarageCars:
+combinedData.drop('GarageArea', 1, inplace = True)
 combinedData['PoolArea'].value_counts()
-
 # We drop the PoolArea as there seem to be no reliable information in it:
 combinedData.drop('PoolArea', 1, inplace=True)
 # We drop the feature for obvious reasons:
 combinedData.drop('MiscVal', 1, inplace=True)
 combinedData['TotRmsAbvGrd'].replace([13, 14, 15], 13, inplace=True)
-combinedData = pd.concat(objs=[trData, testData], axis=0).reset_index(drop=True)
-combinedData['Heating'].replace(['Floor', 'OthW', 'Wall', 'Grav'], 'Rare', inplace=True)
-combinedData['Electrical'].replace(['Mix', 'FuseP'], 'Rare', inplace=True)
 
 # #### 3.2.1 Convert categorial to dummies
 # The following variables are categorial type features:
@@ -170,8 +166,9 @@ combinedData['Electrical'].replace(['Mix', 'FuseP'], 'Rare', inplace=True)
 
 ltr = len(trData)
 ltest = len(testData)
-# combinedData = pd.concat(objs=[trData, testData], axis = 0).reset_index(drop = True)
 combinedData.drop(['Alley', 'Street', 'LotShape', 'LotConfig', 'Electrical', 'GarageYrBlt', 'Heating'], 1, inplace=True)
+#which columns are used eventually?
+print(combinedData.columns)
 combinedData = pd.get_dummies(combinedData, columns=['MSSubClass', 'MSZoning',
                                                      'Neighborhood', 'BldgType', 'HouseStyle', 'RoofStyle', 'RoofMatl',
                                                      'MasVnrType', 'Foundation', 'GarageType',
@@ -224,7 +221,7 @@ ltest = len(testData)
 trData = combinedData[0:ltr].reset_index(drop=True)
 testData = combinedData[ltr:ltr + ltest].reset_index(drop=True).drop(['SalePrice', 'SalePriceK', 'PricePerArea'], 1)
 
-# ## 4. Train the models and predict
+# 4. Train the models and predict
 X = trData.drop(['SalePrice', 'SalePriceK', 'PricePerArea', 'Id'], 1)
 y = trData['SalePrice']
 
@@ -234,15 +231,15 @@ n_folds = 10
 
 kRR = KernelRidge(alpha=2, degree=1)
 
+score = [0, 0]
+kfold = 5
+for i in range(kfold):
+    Xtrain, Xtest, ytrain, ytest = model_selection.train_test_split(X, y, train_size=0.5, test_size=0.5, random_state=i)
+    score = [sum(x) for x in zip(score, house_prices_functions.find_cv_error(Xtrain, ytrain))]
+score = [x / kfold for x in score]
+print(score[0], " ", score[1])
 
-# score = [0, 0]
-# kfold = 5
-# for i in range(kfold):
-#     Xtrain, Xtest, ytrain, ytest = model_selection.train_test_split(X, y, train_size=0.5, test_size=0.5, random_state=i)
-#     score = [sum(x) for x in zip(score, house_prices_functions.find_cv_error(Xtrain, ytrain))]
-# score = [x / kfold for x in score]
-# score
-
+#final Crossvalidation
 clfList = [linear_model.LinearRegression(), ensemble.RandomForestRegressor(), ensemble.GradientBoostingRegressor(),
            xgb.XGBRegressor(), KernelRidge(), linear_model.BayesianRidge(), lgb.LGBMRegressor(verbose = -1)]
 cvSplit = model_selection.ShuffleSplit(n_splits=10, train_size=0.5, test_size=0.5, random_state=0)
@@ -303,7 +300,6 @@ class AveragingModels():
 
 # averaging
 bayR = linear_model.BayesianRidge()
-# averagingC = AveragingModels(models=(clfList[4], bayR, clfList[6]), coeffs=[0.4, 0.4, 0.2])
 averagingC = AveragingModels(models=(clfList[2], clfList[3], clfList[4], clfList[5], clfList[6]),
                              coeffs=[0.1, 0.1, 0.45, 0.2, 0.15])
 
@@ -313,7 +309,6 @@ print(metrics.mean_squared_error(ytest, arpredict) ** 0.5)
 predData = pd.DataFrame({'Index': ytest.index, 'SalePrice': ytest.values, 'SalePricePredicted': arpredict,
                          'Error': arpredict - ytest.values})
 
-# averagingC = AveragingModels(models=(clfList[4], bayR, clfList[6]), coeffs=[0.4, 0.4, 0.2])
 averagingC = AveragingModels(models=(clfList[2], clfList[3], clfList[4], clfList[5], clfList[6]),
                              coeffs=[0.1, 0.1, 0.35, 0.35, 0.1])
 bayR = linear_model.BayesianRidge()
