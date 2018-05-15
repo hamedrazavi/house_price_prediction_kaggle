@@ -131,14 +131,13 @@ combinedData = pd.concat(objs=[trData, testData], axis=0).reset_index(drop=True)
 # After removing the two outliers:
 # Another possiblity for outliers is the price per area. There is only one house with a price per square foot less than $31, and the next lowest price is $40, so, we remove the cheapest one:
 trData[trData['SalePrice'] / trData['GrLivArea'] < 31]
-trData.drop(trData[trData['SalePrice'] / trData['GrLivArea'] < 31].index, inplace=True)
+# trData.drop(trData[trData['SalePrice'] / trData['GrLivArea'] < 31].index, inplace=True)
 
 data_list = [trData, testData]
 for data in data_list:
     data['TotalSF'] = data['TotalBsmtSF'] + data['1stFlrSF'] + data['2ndFlrSF']
 
 # House age seems to be an important feature correlated with the saleprice:
-data_list = [trData, testData]
 # for data in data_list:
 #     data['HouseAge'] = data['YrSold'] - data['YearBuilt']
 #     data['YrfromRemod'] = data['YrSold'] - data['YearRemodAdd']
@@ -334,7 +333,7 @@ arpredict = np.expm1(arpredict)
 ypredict = pd.DataFrame({'Id': testData['Id'], 'SalePrice': arpredict})
 ypredict.to_csv('../predictions.csv', index=False)
 ypredict.head()
-yold = pd.read_csv('../predictions11702.csv')
+yold = pd.read_csv('../predictions11644.csv')
 yold.head()
 plt.plot(yold)
 plt.plot(ypredict)
