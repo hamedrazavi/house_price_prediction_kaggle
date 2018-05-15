@@ -213,7 +213,7 @@ combinedData = pd.concat(objs=[trData, testData], axis=0).reset_index(drop=True)
 # log transform skewed numeric features:
 numeric_feats = combinedData.dtypes[combinedData.dtypes != "object"].index
 skewed_feats = combinedData[numeric_feats].apply(lambda x: skew(x.dropna()))  # compute skewness
-skewed_feats = skewed_feats[skewed_feats > 1]
+skewed_feats = skewed_feats[skewed_feats > 1.25]
 skewed_feats = skewed_feats.index
 combinedData[skewed_feats] = np.log1p(combinedData[skewed_feats])
 ltr = len(trData)
